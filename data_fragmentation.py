@@ -11,8 +11,20 @@ def is_hash_valid(data: str, stored_hash: str) -> bool:
     return simple_hash(data) == stored_hash
 
 
+def is_fragments_complete(fragments: dict) -> bool:
+    if not fragments:
+        return True
+
+    keys = fragments.keys()
+    min_key, max_key = min(keys), max(keys)
+    return set(keys) == set(range(min_key, max_key + 1))
+
+
 # O(NL) time complexity: N number of fragments, L max fragment size, O(N) space
 def reconstruct_data(fragments: dict) -> str:
+    if not is_fragments_complete(fragments):
+        raise ValueError("Missing fragment")
+
     reconstructed_data = []
     for key in sorted(fragments.keys()):
         fragment = fragments[key]
@@ -37,5 +49,25 @@ assert reconstruct_data({
 }) == "NewData HashedCorrectly"
 
 assert reconstruct_data({}) == ""
+
+try:
+    reconstruct_data({
+        1: {'data': 'New', 'hash': simple_hash('New')},
+        2: {'data': 'Data', 'hash': simple_hash('Data')},
+        3: {'data': ' HashedInvalid', 'hash': simple_hash(' Hashed')},
+        4: {'data': 'Correctly', 'hash': simple_hash('Correctly')}
+    }) == "NewData HashedCorrectly"
+except ValueError as e:
+    assert str(e) == "Data integrity check failed"
+
+try:
+    # Missing fragment
+    reconstruct_data({
+        1: {'data': 'New', 'hash': simple_hash('New')},
+        2: {'data': 'Data', 'hash': simple_hash('Data')},
+        4: {'data': 'Correctly', 'hash': simple_hash('Correctly')}
+    }) == "NewData HashedCorrectly"
+except ValueError as e:
+    assert str(e) == "Missing fragment"
 
 print("Test passed")
